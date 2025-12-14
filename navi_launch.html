@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Open Fake Navi</title>
+</head>
+<body>
+    <h2>Click to open Fake Navi in Navi App:</h2>
+    
+    <!-- Working intent URL -->
+    <a href="intent://start#Intent;package=com.naviapp;component=com.naviapp/com.getvisitapp.visit.activity.SdkWebviewActivity;S.web_url=https://1brinda12.github.io/navi/fake_navi.html;B.is_debug=true;launchFlags=0x10008000;end" 
+       style="display: inline-block; padding: 15px 30px; background: #4a6ee0; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+        Open Fake Navi in Navi App
+    </a>
+    
+    <p style="margin-top: 20px;">
+        <small>If this doesn't work, make sure:</small><br>
+        1. Navi app is installed<br>
+        2. You're clicking from Chrome browser<br>
+        3. The activity accepts external URLs
+    </p>
+
+    <!-- Alternative with JavaScript fallback -->
+    <script>
+    function openFakeNavi() {
+        // Direct intent URL
+        window.location.href = "intent://start#Intent;package=com.naviapp;component=com.naviapp/com.getvisitapp.visit.activity.SdkWebviewActivity;S.web_url=https://1brinda12.github.io/navi/fake_navi.html;B.is_debug=true;launchFlags=0x10008000;end";
+        
+        // Fallback after 2 seconds if intent fails
+        setTimeout(function() {
+            if (document.hasFocus()) {
+                // Intent worked (app opened)
+                console.log("App opened successfully");
+            } else {
+                // Could add a fallback action here if needed
+                console.log("Intent may have failed");
+            }
+        }, 2000);
+    }
+    
+    // Auto-trigger on page load (optional)
+    // window.onload = openFakeNavi;
+    </script>
+</body>
+</html>
